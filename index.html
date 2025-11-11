@@ -57,7 +57,7 @@
       }
 
       if (telegramApp) {
-        telegramApp.disableVerticalSwipe();
+        telegramApp.disableVerticalSwipes();
       }
 
       createUnityInstance(document.querySelector("#unity-canvas"), {
@@ -76,6 +76,8 @@
           telegramApp.expand();
           telegramApp.requestFullscreen();
         }
+
+        //lockOrientation
 
         // if (!document.fullscreenElement && unityCanvas.requestFullscreen) {
         //   try {
