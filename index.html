@@ -35,7 +35,7 @@
   </head>
   <body style="text-align: center; padding: 0; border: 0; margin: 0;">
     <canvas id="unity-canvas" width=960 height=540 tabindex="-1" style="width: 960px; height: 540px; background: #231F20"></canvas>
-    <script src="Build/GoldWeb1.loader.js"></script>
+    <script src="Build/GoldWeb2.loader.js"></script>
     <script>
       const telegramApp = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
 
@@ -62,9 +62,9 @@ if (telegramApp) {
 
       createUnityInstance(document.querySelector("#unity-canvas"), {
         arguments: [],
-        dataUrl: "Build/GoldWeb1.data",
-        frameworkUrl: "Build/GoldWeb1.framework.js",
-        codeUrl: "Build/GoldWeb1.wasm",
+        dataUrl: "Build/GoldWeb2.data",
+        frameworkUrl: "Build/GoldWeb2.framework.js",
+        codeUrl: "Build/GoldWeb2.wasm",
         streamingAssetsUrl: "StreamingAssets",
         companyName: "DefaultCompany",
         productName: "GoldenShelter",
