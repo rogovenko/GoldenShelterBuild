@@ -6,6 +6,10 @@
     <title>Unity Web Player | GoldenShelter</title>
     <script src="https://telegram.org/js/telegram-web-app.js?59"></script>
   <style>
+    :root {
+      color-scheme: dark;
+    }
+
     html,
     body {
       margin: 0;
@@ -15,14 +19,11 @@
       height: 100%;
       overflow: hidden;
       background: #231F20;
+      font-family: sans-serif;
     }
 
     body {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      text-align: center;
-      font-family: sans-serif;
+      position: relative;
     }
 
     #unity-canvas {
@@ -30,11 +31,60 @@
       height: 100vh !important;
       background: #231F20;
       outline: none;
-    } 
+      display: block;
+    }
+
+    #loading-overlay {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      background: #231F20;
+      color: #F5F5F5;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      transition: opacity 0.4s ease;
+      z-index: 10;
+    }
+
+    body.loaded #loading-overlay {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #progress-track {
+      width: min(320px, 70vw);
+      height: 8px;
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    #progress-fill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #F7C548, #F08C00);
+      border-radius: inherit;
+      transition: width 0.15s ease;
+    }
+
+    #progress-text {
+      font-size: 0.9rem;
+      color: rgba(255, 255, 255, 0.85);
+    }
   </style>
   </head>
   <body style="text-align: center; padding: 0; border: 0; margin: 0;">
     <canvas id="unity-canvas" width=960 height=540 tabindex="-1" style="width: 960px; height: 540px; background: #231F20"></canvas>
+    <div id="loading-overlay" role="status" aria-live="polite">
+      <div id="progress-track">
+        <div id="progress-fill"></div>
+      </div>
+      <div id="progress-text">Загрузка 0%</div>
+    </div>
     <script src="Build/GoldWeb2.loader.js"></script>
     <script>
       const telegramApp = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
@@ -44,6 +94,9 @@ if (telegramApp) {
 }
 
 const unityCanvas = document.querySelector("#unity-canvas");
+const loadingOverlay = document.getElementById("loading-overlay");
+const progressFill = document.getElementById("progress-fill");
+const progressText = document.getElementById("progress-text");
 
 function applyViewportMeta() {
   var meta = document.createElement('meta');
@@ -60,6 +113,16 @@ if (telegramApp) {
   telegramApp.disableVerticalSwipes();
 }
 
+function updateProgress(progress) {
+  const percentage = Math.round(progress * 100);
+  progressFill.style.width = `${percentage}%`;
+  progressText.textContent = `Загрузка ${percentage}%`;
+
+  if (progress >= 0.999) {
+    document.body.classList.add("loaded");
+  }
+}
+
       createUnityInstance(document.querySelector("#unity-canvas"), {
         arguments: [],
         dataUrl: "Build/GoldWeb2.data",
@@ -71,7 +134,7 @@ if (telegramApp) {
         productVersion: "0.1.0",
         // matchWebGLToCanvasSize: false, // Uncomment this to separately control WebGL canvas render size and DOM element size.
         // devicePixelRatio: 1, // Uncomment this to override low DPI rendering on high DPI displays.
-      }).then((unityInstance) => {
+      }, updateProgress).then((unityInstance) => {
         if (telegramApp) {
           telegramApp.expand();
           telegramApp.requestFullscreen();
