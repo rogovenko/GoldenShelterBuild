@@ -81,11 +81,27 @@
       color: rgba(255, 255, 255, 0.65);
       letter-spacing: 0.16em;
     }
+
+    #rotate-message {
+      font-size: 0.85rem;
+      color: rgba(255, 255, 255, 0.9);
+      letter-spacing: 0.08em;
+      text-align: center;
+      padding: 16px;
+      display: none;
+    }
+
+    @media (max-width: 768px) and (orientation: portrait) {
+      #rotate-message {
+        display: block;
+      }
+    }
   </style>
   </head>
   <body style="text-align: center; padding: 0; border: 0; margin: 0;">
     <canvas id="unity-canvas" width=960 height=540 tabindex="-1" style="width: 960px; height: 540px; background: #231F20"></canvas>
     <div id="loading-overlay" role="status" aria-live="polite">
+      <div id="rotate-message">Переверните устройство горизонтально (на бок)</div>
       <div id="progress-track">
         <div id="progress-fill"></div>
       </div>
@@ -97,7 +113,15 @@
       const BUILD_VERSION = "11";
       const telegramApp = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
 
-if (telegramApp) {
+function isTelegramAvailable() {
+  return telegramApp && typeof telegramApp === 'object';
+}
+
+function hasTelegramMethod(methodName) {
+  return isTelegramAvailable() && typeof telegramApp[methodName] === 'function';
+}
+
+if (hasTelegramMethod('ready')) {
   telegramApp.ready();
 }
 
@@ -106,6 +130,7 @@ const loadingOverlay = document.getElementById("loading-overlay");
 const progressFill = document.getElementById("progress-fill");
 const progressText = document.getElementById("progress-text");
 const buildInfo = document.getElementById("build-info");
+const rotateMessage = document.getElementById("rotate-message");
 
 if (buildInfo) {
   buildInfo.textContent = `v.${BUILD_VERSION}`;
@@ -122,9 +147,21 @@ if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
   applyViewportMeta();
 }
 
-if (telegramApp) {
+if (hasTelegramMethod('disableVerticalSwipes')) {
   telegramApp.disableVerticalSwipes();
 }
+
+function checkOrientation() {
+  if (rotateMessage) {
+    const isPortrait = window.innerHeight > window.innerWidth;
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    rotateMessage.style.display = (isMobile && isPortrait) ? 'block' : 'none';
+  }
+}
+
+checkOrientation();
+window.addEventListener('resize', checkOrientation);
+window.addEventListener('orientationchange', checkOrientation);
 
 function updateProgress(progress) {
   const percentage = Math.round(progress * 100);
@@ -153,7 +190,7 @@ function updateProgress(progress) {
           telegramApp.requestFullscreen();
         }
       }).catch((message) => {
-        alert(message);
+        // alert(message);
       });
     </script>
   </body>
