@@ -5,193 +5,748 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <title>Unity Web Player | GoldenShelter</title>
     <script src="https://telegram.org/js/telegram-web-app.js?59"></script>
-  <style>
-    :root {
-      color-scheme: dark;
-    }
-
-    html,
-    body {
-      margin: 0;
-      padding: 0;
-      border: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background: #231F20;
-      font-family: sans-serif;
-    }
-
-    body {
-      position: relative;
-    }
-
-    #unity-canvas {
-      width: 100vw !important;
-      height: 100vh !important;
-      background: #231F20;
-      outline: none;
-      display: block;
-    }
-
-    #loading-overlay {
-      position: fixed;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      gap: 12px;
-      background: #231F20;
-      color: #F5F5F5;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      transition: opacity 0.4s ease;
-      z-index: 10;
-    }
-
-    body.loaded #loading-overlay {
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    #progress-track {
-      width: min(320px, 70vw);
-      height: 8px;
-      background: rgba(255, 255, 255, 0.12);
-      border-radius: 999px;
-      overflow: hidden;
-    }
-
-    #progress-fill {
-      width: 0%;
-      height: 100%;
-      background: linear-gradient(90deg, #F7C548, #F08C00);
-      border-radius: inherit;
-      transition: width 0.15s ease;
-    }
-
-    #progress-text {
-      font-size: 0.9rem;
-      color: rgba(255, 255, 255, 0.85);
-    }
-
-    #build-info {
-      font-size: 0.7rem;
-      color: rgba(255, 255, 255, 0.65);
-      letter-spacing: 0.16em;
-    }
-
-    #rotate-message {
-      font-size: 0.85rem;
-      color: rgba(255, 255, 255, 0.9);
-      letter-spacing: 0.08em;
-      text-align: center;
-      padding: 16px;
-      display: none;
-    }
-
-    @media (max-width: 768px) and (orientation: portrait) {
-      #rotate-message {
-        display: block;
+    <style>
+      @font-face {
+        font-family: 'Inter';
+        src: url('public/fonts/Inter.ttf') format('truetype');
+        font-weight: 600;
+        font-style: normal;
+        font-display: swap;
       }
-    }
-  </style>
+
+      @font-face {
+        font-family: 'Grotesk';
+        src: url('public/fonts/Grotesk.ttf') format('truetype');
+        font-weight: 600;
+        font-style: normal;
+        font-display: swap;
+      }
+
+      :root {
+        color-scheme: dark;
+      }
+
+      html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #FE8E1D;
+        font-family: 'Inter', sans-serif;
+        font-weight: 600;
+      }
+
+      body {
+        position: relative;
+      }
+      
+      #unity-canvas {
+        width: 100vw !important;
+        height: 100vh !important;
+        display: block;
+        background: #FE8E1D;
+        outline: none;
+      }
+
+      #loading-overlay {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        align-items: center;
+        padding: 40px 20px;
+        background: #FE8E1D;
+        color: #F5F5F5;
+        transition: opacity 0.3s ease;
+        z-index: 10;
+      }
+
+      body.loaded #loading-overlay {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      #title-top {
+        font-family: 'Grotesk', sans-serif;
+        font-weight: 600;
+        font-size: 30px;
+        line-height: 100%;
+        letter-spacing: 0%;
+        text-align: center;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.95);
+      }
+
+      #title-top-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+      }
+
+      @keyframes rotateLogo {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      #logo-top {
+        width: 2.25rem;
+        height: 2.25rem;
+        background-image: url('public/images/logo.svg');
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+        animation: rotateLogo 5s linear infinite;
+      }
+
+      #version-top {
+        font-family: 'Inter', sans-serif;
+        font-weight: 600;
+        font-size: 18px;
+        line-height: 22px;
+        letter-spacing: 0%;
+        text-align: center;
+        color: rgba(255, 255, 255, 0.65);
+      }
+
+      #rotate-wrapper {
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+      }
+
+      @keyframes tiltPhone {
+        0%, 100% {
+          transform: rotate(0deg);
+        }
+        50% {
+          transform: rotate(-15deg);
+        }
+      }
+
+      #rotate-icon {
+        width: 10.375rem;
+        height: 6.25rem;
+        background-image: url('public/images/phone.svg');
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+        transform-origin: center bottom;
+        animation: tiltPhone 2s ease-in-out infinite;
+      }
+
+      #rotate-message {
+        font-family: 'Inter', sans-serif;
+        font-weight: 600;
+        font-size: 18px;
+        line-height: 22px;
+        letter-spacing: 0%;
+        text-align: center;
+        color: rgba(255, 255, 255, 0.9);
+      }
+
+      #loading-bottom {
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+        max-width: min(320px, 70vw);
+      }
+
+      #progress-text {
+        font-family: 'Inter', sans-serif;
+        font-weight: 600;
+        font-size: 18px;
+        line-height: 22px;
+        letter-spacing: 0%;
+        text-align: center;
+        color: rgba(255, 255, 255, 0.85);
+        margin-bottom: 8px;
+      }
+
+      #progress-track {
+        width: 100%;
+        height: 22px;
+        background: #352A1A;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+
+      #progress-fill {
+        width: 0%;
+        height: 100%;
+        background: #FFB623;
+        border-radius: 8px;
+        box-shadow: inset 0 0 0 4px #352A1A;
+        transition: width 0.15s ease;
+      }
+
+      #build-info {
+        font-family: 'Inter', sans-serif;
+        font-weight: 600;
+        font-size: 18px;
+        line-height: 22px;
+        letter-spacing: 0%;
+        text-align: center;
+        color: rgba(255, 255, 255, 0.65);
+        display: none;
+      }
+
+      /* Десктопная версия */
+      @media (min-width: 769px), (orientation: landscape) {
+        #loading-overlay {
+          justify-content: space-between;
+          gap: 12px;
+          padding-top: 4rem;
+          padding-bottom: 3rem;
+          padding-left: 20px;
+          padding-right: 20px;
+        }
+
+        #title-top-wrapper {
+          display: flex;
+        }
+
+        #rotate-wrapper {
+          display: none;
+        }
+
+        #loading-bottom {
+          display: flex;
+          max-width: min(320px, 70vw);
+        }
+
+        #progress-track {
+          width: 100%;
+        }
+
+        #progress-text {
+          display: block;
+        }
+
+        #build-info {
+          display: none;
+        }
+      }
+
+      /* Мобильная портретная версия */
+      @media (max-width: 768px) and (orientation: portrait) {
+        #loading-overlay {
+          padding-top: 9rem;
+          padding-bottom: 6rem;
+          padding-left: 20px;
+          padding-right: 20px;
+        }
+
+        #title-top-wrapper {
+          display: flex;
+        }
+
+        #rotate-wrapper {
+          display: flex;
+        }
+
+        #loading-bottom {
+          display: flex;
+        }
+
+        #progress-text {
+          display: block;
+        }
+      }
+
+      /* Частицы-пузырьки */
+      .bubble-particle {
+        position: absolute;
+        border-radius: 50%;
+        background: rgba(255, 247, 68, 0.3);
+        pointer-events: none;
+        z-index: 1;
+        opacity: 0;
+        animation-fill-mode: backwards;
+        filter: blur(2px);
+      }
+
+      .gold-particle {
+        position: absolute;
+        border-radius: 50%;
+        background: rgb(255, 182, 35);
+        pointer-events: none;
+        z-index: 2;
+        opacity: 0;
+        animation-fill-mode: backwards;
+        width: 16px;
+        height: 16px;
+      }
+
+      /* Экран поворота после загрузки игры */
+      #rotate-screen-overlay {
+        position: fixed;
+        inset: 0;
+        display: none;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 16px;
+        background: #FE8E1D;
+        color: #F5F5F5;
+        z-index: 20;
+      }
+
+      #rotate-screen-overlay.show {
+        display: flex;
+      }
+
+      #rotate-screen-icon {
+        width: 10.375rem;
+        height: 6.25rem;
+        background-image: url('public/images/phone.svg');
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+        transform-origin: center bottom;
+        animation: tiltPhone 2s ease-in-out infinite;
+      }
+
+      #rotate-screen-message {
+        font-family: 'Inter', sans-serif;
+        font-weight: 600;
+        font-size: 18px;
+        line-height: 22px;
+        letter-spacing: 0%;
+        text-align: center;
+        color: rgba(255, 255, 255, 0.9);
+      }
+    </style>
   </head>
   <body style="text-align: center; padding: 0; border: 0; margin: 0;">
-    <canvas id="unity-canvas" width=960 height=540 tabindex="-1" style="width: 960px; height: 540px; background: #231F20"></canvas>
+    <canvas id="unity-canvas" tabindex="-1"></canvas>
     <div id="loading-overlay" role="status" aria-live="polite">
-      <div id="rotate-message">Переверните устройство горизонтально (на бок)</div>
-      <div id="progress-track">
-        <div id="progress-fill"></div>
+      <div id="title-top-wrapper">
+        <div id="logo-top"></div>
+        <div id="title-top">
+          Узнай<br>цену золота
+        </div>
+        <div id="version-top"></div>
       </div>
-      <div id="progress-text">Загрузка 0%</div>
-      <div id="build-info">v.?</div>
+      <div id="rotate-wrapper">
+        <div id="rotate-icon"></div>
+        <div id="rotate-message">
+          Чтобы играть,<br>поверните устройство<br>горизонтально
+        </div>
+      </div>
+      <div id="loading-bottom">
+        <div id="progress-text">Загрузка 0%</div>
+        <div id="progress-track">
+          <div id="progress-fill"></div>
+        </div>
+      </div>
+      <div id="build-info"></div>
+    </div>
+    <div id="rotate-screen-overlay">
+      <div id="rotate-screen-icon"></div>
+      <div id="rotate-screen-message">
+        Переверните<br>смартфон
+      </div>
     </div>
     <script src="Build/GoldWeb2.loader.js"></script>
     <script>
-      const BUILD_VERSION = "17";
+      const BUILD_VERSION = "0.74";
       const telegramApp = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
 
-function isTelegramAvailable() {
-  return telegramApp && typeof telegramApp === 'object';
-}
+      console.log("Platform: ", telegramApp.platform);
+      const isTelegramWebApp = telegramApp.platform !== 'unknown';
 
-function hasTelegramMethod(methodName) {
-  return isTelegramAvailable() && typeof telegramApp[methodName] === 'function';
-}
+      if (isTelegramWebApp) {
+        telegramApp.ready();
+      }
 
-if (hasTelegramMethod('ready')) {
-  telegramApp.ready();
-}
+      const unityCanvas = document.querySelector("#unity-canvas");
+      const progressFill = document.getElementById("progress-fill");
+      const progressText = document.getElementById("progress-text");
+      const versionTop = document.getElementById("version-top");
+      const rotateMessage = document.getElementById("rotate-message");
+      const rotateScreenOverlay = document.getElementById("rotate-screen-overlay");
+      
+      let gameLoaded = false;
 
-const unityCanvas = document.querySelector("#unity-canvas");
-const loadingOverlay = document.getElementById("loading-overlay");
-const progressFill = document.getElementById("progress-fill");
-const progressText = document.getElementById("progress-text");
-const buildInfo = document.getElementById("build-info");
-const rotateMessage = document.getElementById("rotate-message");
+      if (versionTop) {
+        versionTop.textContent = `v. ${BUILD_VERSION}`;
+      }
 
-if (buildInfo) {
-  buildInfo.textContent = `v.${BUILD_VERSION}`;
-}
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      
+      if (isMobile) {
+        // Mobile device: add viewport meta tag
+        var meta = document.createElement('meta');
+        meta.name = 'viewport';
+        meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
+        document.getElementsByTagName('head')[0].appendChild(meta);
+      }
 
-function applyViewportMeta() {
-  var meta = document.createElement('meta');
-  meta.name = 'viewport';
-  meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
-  document.getElementsByTagName('head')[0].appendChild(meta);
-}
+      function checkOrientation() {
+        let isPortrait = false;
+        isPortrait = window.innerHeight > window.innerWidth;
+        if (rotateMessage) {
+          rotateMessage.style.display = (isMobile && isPortrait) ? 'block' : 'none';
+        }
 
-if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-  applyViewportMeta();
-}
+        if(!isPortrait) {
+          if (isTelegramWebApp) {
+            telegramApp.lockOrientation();
+          }
+        }
+        
+        // Показываем экран поворота только после загрузки игры и только в портретной ориентации
+        if (rotateScreenOverlay && gameLoaded) {
+          if (isPortrait) {
+            rotateScreenOverlay.classList.add('show');
+          } else {
+            rotateScreenOverlay.classList.remove('show');
+          }
+        }
+      }
 
-if (hasTelegramMethod('disableVerticalSwipes')) {
-  telegramApp.disableVerticalSwipes();
-}
+      checkOrientation();
+      window.addEventListener('resize', checkOrientation);
+      window.addEventListener('orientationchange', checkOrientation);
 
-function checkOrientation() {
-  if (rotateMessage) {
-    const isPortrait = window.innerHeight > window.innerWidth;
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    rotateMessage.style.display = (isMobile && isPortrait) ? 'block' : 'none';
-  }
-}
+      let currentProgress = 0;
+      let unityLoaded = false;
+      let progressTimer = null;
+      let fakeProgressTimer = null;
+      let realProgressStarted = false;
 
-checkOrientation();
-window.addEventListener('resize', checkOrientation);
-window.addEventListener('orientationchange', checkOrientation);
+      // Функция для обновления отображения прогресса
+      function updateProgressDisplay(percentage) {
+        if (progressFill) {
+          progressFill.style.width = `${percentage}%`;
+        }
+        if (progressText) {
+          progressText.textContent = `Загрузка ${percentage}%`;
+        }
+        currentProgress = percentage;
+      }
 
-function updateProgress(progress) {
-  const percentage = Math.round(progress * 100);
-  progressFill.style.width = `${percentage}%`;
-  progressText.textContent = `Загрузка ${percentage}%`;
+      // Фейковый прогресс в начале (каждые 2 секунды +1%)
+      function startFakeProgress() {
+        fakeProgressTimer = setInterval(() => {
+          // Если реальная загрузка еще не началась, увеличиваем фейковый прогресс
+          if (!realProgressStarted && currentProgress < 90) {
+            updateProgressDisplay(currentProgress + 1);
+          } else {
+            // Отменяем фейковый таймер, когда реальная загрузка началась
+            if (fakeProgressTimer) {
+              clearInterval(fakeProgressTimer);
+              fakeProgressTimer = null;
+            }
+          }
+        }, 2000);
+      }
 
-  if (progress >= 0.999) {
-    document.body.classList.add("loaded");
-  }
-}
+      function updateProgress(progress) {
+        const realPercentage = Math.round(progress * 100);
+        
+        // Если реальный прогресс начался (больше 0.1%), отменяем фейковый таймер
+        if (progress > 0.001 && !realProgressStarted) {
+          realProgressStarted = true;
+          if (fakeProgressTimer) {
+            clearInterval(fakeProgressTimer);
+            fakeProgressTimer = null;
+          }
+        }
+        
+        // Трюк: показываем реальный прогресс до 90%, затем "замораживаем" на 90%
+        // даже когда реальный прогресс продолжает расти до 100%
+        let displayPercentage = realPercentage;
+        
+        if (progress >= 0.9) {
+          // Когда реальный прогресс >= 90%, показываем только 90%
+          displayPercentage = 90;
+          currentProgress = 90;
+        } else {
+          // До 90% показываем прогресс
+          if (realProgressStarted) {
+            // Реальная загрузка началась - используем реальный прогресс
+            // Но не показываем меньше, чем уже показали (чтобы не было отката назад)
+            displayPercentage = Math.max(realPercentage, currentProgress);
+            currentProgress = displayPercentage;
+          } else {
+            // Реальная загрузка еще не началась, фейковый таймер продолжит увеличивать прогресс
+            // Но если реальный прогресс больше фейкового, используем реальный
+            if (realPercentage > currentProgress) {
+              currentProgress = realPercentage;
+              displayPercentage = realPercentage;
+            }
+          }
+        }
+        
+        updateProgressDisplay(displayPercentage);
 
-      createUnityInstance(document.querySelector("#unity-canvas"), {
-        arguments: [],
-        dataUrl: "Build/GoldWeb2.data",
-        frameworkUrl: "Build/GoldWeb2.framework.js",
-        codeUrl: "Build/GoldWeb2.wasm",
-        streamingAssetsUrl: "StreamingAssets",
-        companyName: "DefaultCompany",
-        productName: "GoldenShelter",
-        productVersion: "0.1.0",
-        // matchWebGLToCanvasSize: false, // Uncomment this to separately control WebGL canvas render size and DOM element size.
-        // devicePixelRatio: 1, // Uncomment this to override low DPI rendering on high DPI displays.
-      }, updateProgress).then((unityInstance) => {
-        if (telegramApp) {
+        // Когда реальный прогресс достиг 100%, запускаем таймер для увеличения от 90% до 100%
+        if (progress >= 0.999 && !unityLoaded && !progressTimer) {
+          unityLoaded = true;
+          // После полной загрузки Unity начинаем постепенное увеличение прогресса
+          // Каждые 2 секунды добавляем +1% до 100%
+          progressTimer = setInterval(continueProgress, 2000);
+        }
+      }
+
+      // Функция для постепенного увеличения прогресса после 90%
+      function continueProgress() {
+        if (currentProgress < 100) {
+          updateProgressDisplay(currentProgress + 1);
+        } else {
+          // Останавливаем таймер при достижении 100%
+          if (progressTimer) {
+            clearInterval(progressTimer);
+            progressTimer = null;
+          }
+        }
+      }
+
+      // Функция для удаления частиц
+      function removeParticles() {
+        const particles = document.querySelectorAll('.bubble-particle, .gold-particle');
+        particles.forEach(particle => {
+          particle.remove();
+        });
+      }
+
+      // Глобальная функция для скрытия экрана загрузки из Unity
+      window.hideLoadingScreen = function() {
+        // Останавливаем таймер прогресса сразу
+        if (progressTimer) {
+          clearInterval(progressTimer);
+          progressTimer = null;
+        }
+        if (fakeProgressTimer) {
+          clearInterval(fakeProgressTimer);
+          fakeProgressTimer = null;
+        }
+        
+        // Плавно скрываем экран через opacity за 0.3 секунды
+        document.body.classList.add("loaded");
+        
+        // После завершения анимации (0.3 секунды) деактивируем экран и удаляем частицы
+        setTimeout(() => {
+          // Удаляем частицы
+          removeParticles();
+          // Деактивируем экран (скрываем полностью)
+          const loadingOverlay = document.getElementById("loading-overlay");
+          if (loadingOverlay) {
+            loadingOverlay.style.display = "none";
+          }
+          // Игра загружена - теперь можно показывать экран поворота
+          gameLoaded = true;
+          // Проверяем ориентацию для показа экрана поворота
+          checkOrientation();
+        }, 300);
+      };
+
+      // Вызываем Telegram методы только если мы действительно в Telegram Web App
+      if (isTelegramWebApp) {
+        if (typeof telegramApp.expand === 'function') {
           telegramApp.expand();
+        }
+        if (typeof telegramApp.requestFullscreen === 'function') {
           telegramApp.requestFullscreen();
         }
-      }).catch((message) => {
-        // alert(message);
-      });
+      }
+
+      // Инициализируем лоадер с 0%
+      updateProgress(0);
+      
+      // Запускаем фейковый прогресс в начале (каждые 2 секунды +1%)
+      startFakeProgress();
+
+      // Создание частиц-пузырьков
+      const loadingOverlay = document.getElementById("loading-overlay");
+      
+      function createBubbleParticles() {
+        if (!loadingOverlay) return;
+        
+        const particleCount = 40;
+        const styleSheet = document.createElement('style');
+        document.head.appendChild(styleSheet);
+        
+        for (let i = 0; i < particleCount; i++) {
+          const particle = document.createElement('div');
+          particle.className = 'bubble-particle';
+          
+          // Случайный размер от 4px до 48px (в 2 раза меньше и в 2 раза больше)
+          const size = Math.random() * 44 + 4;
+          particle.style.width = size + 'px';
+          particle.style.height = size + 'px';
+          
+          // Случайно выбираем, откуда начинается частица: слева или снизу
+          const startFromLeft = Math.random() > 0.5;
+          
+          if (startFromLeft) {
+            // Начальная позиция с левого края до половины высоты
+            const startLeft = Math.random() * 5; // от 0% до 5% слева
+            particle.style.left = startLeft + '%';
+            const startTop = Math.random() * 50; // от 0% до 50% сверху (только до половины)
+            particle.style.top = startTop + '%';
+            particle.style.bottom = 'auto';
+          } else {
+            // Начальная позиция с нижнего края по всей ширине
+            const startLeft = Math.random() * 100; // от 0% до 100% слева (по всей ширине)
+            particle.style.left = startLeft + '%';
+            const startBottom = Math.random() * 5; // от 0% до 5% снизу
+            particle.style.bottom = startBottom + '%';
+            particle.style.top = 'auto';
+          }
+          
+          // Движение вправо (диагонально вверх вправо, как вьюга)
+          const rightMovement = Math.random() * 100 + 50; // от 50vh до 150vh вправо
+          
+          // Случайная длительность анимации от 8 до 15 секунд
+          const duration = Math.random() * 7 + 8;
+          
+          // Случайная задержка старта от 0 до 5 секунд
+          const delay = Math.random() * 5;
+          
+          // Случайная прозрачность от 0.2 до 0.5
+          const opacity = Math.random() * 0.3 + 0.2;
+          particle.style.background = `rgba(255, 247, 68, ${opacity})`;
+          
+          // Создаем уникальные keyframes для каждой частицы
+          const animationName = `bubbleFloat${i}`;
+          const keyframes = `
+            @keyframes ${animationName} {
+              0% {
+                transform: translateY(0) translateX(0);
+                opacity: 0;
+              }
+              2% {
+                opacity: ${opacity};
+              }
+              50% {
+                opacity: ${opacity * 1.5};
+              }
+              100% {
+                transform: translateY(-100vh) translateX(${rightMovement}vh);
+                opacity: 0;
+              }
+            }
+          `;
+          styleSheet.textContent += keyframes;
+          
+          // Применяем анимацию к частице
+          particle.style.animation = `${animationName} ${duration}s linear ${delay}s infinite`;
+          
+          loadingOverlay.appendChild(particle);
+        }
+
+        // Создаем маленькие золотые кружочки (10 штук)
+        const goldParticleCount = 10;
+        for (let i = 0; i < goldParticleCount; i++) {
+          const goldParticle = document.createElement('div');
+          goldParticle.className = 'gold-particle';
+          
+          // Размер фиксированный 16x16 пикселей
+          goldParticle.style.width = '16px';
+          goldParticle.style.height = '16px';
+          goldParticle.style.background = 'rgb(255, 182, 35)';
+          
+          // Случайно выбираем, откуда начинается частица: слева или снизу
+          const startFromLeft = Math.random() > 0.5;
+          
+          if (startFromLeft) {
+            // Начальная позиция с левого края до половины высоты
+            const startLeft = Math.random() * 5; // от 0% до 5% слева
+            goldParticle.style.left = startLeft + '%';
+            const startTop = Math.random() * 50; // от 0% до 50% сверху (только до половины)
+            goldParticle.style.top = startTop + '%';
+            goldParticle.style.bottom = 'auto';
+          } else {
+            // Начальная позиция с нижнего края по всей ширине
+            const startLeft = Math.random() * 100; // от 0% до 100% слева (по всей ширине)
+            goldParticle.style.left = startLeft + '%';
+            const startBottom = Math.random() * 5; // от 0% до 5% снизу
+            goldParticle.style.bottom = startBottom + '%';
+            goldParticle.style.top = 'auto';
+          }
+          
+          // Движение вправо (диагонально вверх вправо, как вьюга)
+          const rightMovement = Math.random() * 100 + 50; // от 50vh до 150vh вправо
+          
+          // Случайная длительность анимации от 8 до 15 секунд
+          const duration = Math.random() * 7 + 8;
+          
+          // Случайная задержка старта от 0 до 5 секунд
+          const delay = Math.random() * 5;
+          
+          // Золотые кружочки непрозрачные
+          // background уже установлен в CSS как rgb(255, 182, 35)
+          
+          // Создаем уникальные keyframes для каждой золотой частицы
+          const animationName = `goldFloat${i}`;
+          const keyframes = `
+            @keyframes ${animationName} {
+              0% {
+                transform: translateY(0) translateX(0);
+                opacity: 0;
+              }
+              2% {
+                opacity: 1;
+              }
+              50% {
+                opacity: 1;
+              }
+              100% {
+                transform: translateY(-100vh) translateX(${rightMovement}vh);
+                opacity: 0;
+              }
+            }
+          `;
+          styleSheet.textContent += keyframes;
+          
+          // Применяем анимацию к золотой частице
+          goldParticle.style.animation = `${animationName} ${duration}s linear ${delay}s infinite`;
+          
+          loadingOverlay.appendChild(goldParticle);
+        }
+      }
+
+      // Создаем частицы после загрузки страницы
+      if (document.readyState === 'complete') {
+        createBubbleParticles();
+      } else {
+        window.addEventListener('load', createBubbleParticles);
+      }
+
+      // Функция запуска Unity
+      function startUnity() {
+        createUnityInstance(unityCanvas, {
+          arguments: [],
+          dataUrl: "Build/GoldWeb2.data.unityweb",
+          frameworkUrl: "Build/GoldWeb2.framework.js.unityweb",
+          codeUrl: "Build/GoldWeb2.wasm.unityweb",
+          streamingAssetsUrl: "StreamingAssets",
+          companyName: "DefaultCompany",
+          productName: "GoldenShelter",
+          productVersion: BUILD_VERSION,
+          matchWebGLToCanvasSize: true,
+        }, updateProgress).then((unityInstance) => {
+          // Unity успешно загружен, таймер прогресса запустится автоматически
+          // когда updateProgress получит прогресс >= 0.999
+        }).catch((message) => {
+          console.log(message);
+        });
+      }
+
+      // Запускаем Unity сразу
+      startUnity();
     </script>
   </body>
 </html>
