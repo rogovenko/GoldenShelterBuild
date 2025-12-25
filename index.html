@@ -359,7 +359,7 @@
     </div>
     <script src="Build/GoldWeb2.loader.js"></script>
     <script>
-      const BUILD_VERSION = "0.74";
+      const BUILD_VERSION = "0.79";
       const telegramApp = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
 
       console.log("Platform: ", telegramApp.platform);
@@ -377,6 +377,7 @@
       const rotateScreenOverlay = document.getElementById("rotate-screen-overlay");
       
       let gameLoaded = false;
+      let unityInstance = null;
 
       if (versionTop) {
         versionTop.textContent = `v. ${BUILD_VERSION}`;
@@ -399,11 +400,11 @@
           rotateMessage.style.display = (isMobile && isPortrait) ? 'block' : 'none';
         }
 
-        if(!isPortrait) {
-          if (isTelegramWebApp) {
-            telegramApp.lockOrientation();
-          }
-        }
+        // if(!isPortrait) {
+        //   if (isTelegramWebApp) {
+        //     telegramApp.lockOrientation();
+        //   }
+        // }
         
         // Показываем экран поворота только после загрузки игры и только в портретной ориентации
         if (rotateScreenOverlay && gameLoaded) {
@@ -413,11 +414,89 @@
             rotateScreenOverlay.classList.remove('show');
           }
         }
+        
+        // Принудительно обновляем размер Unity canvas при изменении ориентации
+        if (unityInstance && unityCanvas && gameLoaded) {
+          // Небольшая задержка для завершения анимации поворота
+          setTimeout(() => {
+            // Принудительно обновляем размер canvas через изменение и восстановление размеров
+            const newWidth = window.innerWidth;
+            const newHeight = window.innerHeight;
+            
+            // Временно сбрасываем размер, чтобы заставить Unity обновиться
+            unityCanvas.style.width = (newWidth - 1) + 'px';
+            unityCanvas.style.height = (newHeight - 1) + 'px';
+            
+            // Возвращаем правильный размер в следующем кадре - это заставит Unity обновить размер
+            requestAnimationFrame(() => {
+              unityCanvas.style.width = '100vw';
+              unityCanvas.style.height = '100vh';
+              
+              // Если Unity Module доступен, пытаемся обновить размер через API
+              if (unityInstance.Module) {
+                // Обновляем размер canvas напрямую в Unity Module
+                if (unityInstance.Module.canvas) {
+                  // Принудительно обновляем внутренний размер canvas
+                  const devicePixelRatio = window.devicePixelRatio || 1;
+                  unityInstance.Module.canvas.width = newWidth * devicePixelRatio;
+                  unityInstance.Module.canvas.height = newHeight * devicePixelRatio;
+                  
+                  // Уведомляем Unity об изменении размера через изменение размеров canvas
+                  if (unityInstance.Module.Screen && typeof unityInstance.Module.Screen.SetResolution === 'function') {
+                    unityInstance.Module.Screen.SetResolution(newWidth, newHeight, false, 0);
+                  }
+                }
+                
+                // Вызываем обработчик изменения размера, если он есть
+                if (unityInstance.Module.onResize) {
+                  unityInstance.Module.onResize(newWidth, newHeight);
+                }
+              }
+            });
+          }, 150);
+        }
+      }
+      
+      // Обработка возврата из фона (когда приложение разворачивается)
+      document.addEventListener('visibilitychange', function() {
+        if (!document.hidden && unityInstance && unityCanvas) {
+          // Когда приложение становится видимым, обновляем размер
+          setTimeout(() => {
+            checkOrientation();
+          }, 200);
+        }
+      });
+      
+      // Дополнительная обработка для Telegram WebApp
+      if (isTelegramWebApp && telegramApp) {
+        // Обработка события изменения размера viewport в Telegram
+        telegramApp.onEvent('viewportChanged', function() {
+          if (unityInstance && unityCanvas) {
+            setTimeout(() => {
+              checkOrientation();
+            }, 200);
+          }
+        });
       }
 
       checkOrientation();
-      window.addEventListener('resize', checkOrientation);
-      window.addEventListener('orientationchange', checkOrientation);
+      
+      // Обработка изменения размера окна
+      let resizeTimeout;
+      window.addEventListener('resize', function() {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+          checkOrientation();
+        }, 100);
+      });
+      
+      // Обработка изменения ориентации устройства
+      window.addEventListener('orientationchange', function() {
+        // Задержка для завершения анимации поворота
+        setTimeout(() => {
+          checkOrientation();
+        }, 200);
+      });
 
       let currentProgress = 0;
       let unityLoaded = false;
@@ -737,7 +816,9 @@
           productName: "GoldenShelter",
           productVersion: BUILD_VERSION,
           matchWebGLToCanvasSize: true,
-        }, updateProgress).then((unityInstance) => {
+        }, updateProgress).then((instance) => {
+          // Сохраняем ссылку на экземпляр Unity для последующего использования
+          unityInstance = instance;
           // Unity успешно загружен, таймер прогресса запустится автоматически
           // когда updateProgress получит прогресс >= 0.999
         }).catch((message) => {
