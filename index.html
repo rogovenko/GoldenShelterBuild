@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Unity Web Player | GoldenShelter</title>
+    <title>Узнай цену золота | Игра</title>
     <script src="https://telegram.org/js/telegram-web-app.js?59"></script>
     <style>
       @font-face {
@@ -386,7 +386,6 @@
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
       
       if (isMobile) {
-        // Mobile device: add viewport meta tag
         var meta = document.createElement('meta');
         meta.name = 'viewport';
         meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
@@ -400,13 +399,6 @@
           rotateMessage.style.display = (isMobile && isPortrait) ? 'block' : 'none';
         }
 
-        // if(!isPortrait) {
-        //   if (isTelegramWebApp) {
-        //     telegramApp.lockOrientation();
-        //   }
-        // }
-        
-        // Показываем экран поворота только после загрузки игры и только в портретной ориентации
         if (rotateScreenOverlay && gameLoaded) {
           if (isPortrait) {
             rotateScreenOverlay.classList.add('show');
@@ -414,40 +406,30 @@
             rotateScreenOverlay.classList.remove('show');
           }
         }
-        
-        // Принудительно обновляем размер Unity canvas при изменении ориентации
+
         if (unityInstance && unityCanvas && gameLoaded) {
-          // Небольшая задержка для завершения анимации поворота
           setTimeout(() => {
-            // Принудительно обновляем размер canvas через изменение и восстановление размеров
             const newWidth = window.innerWidth;
             const newHeight = window.innerHeight;
             
-            // Временно сбрасываем размер, чтобы заставить Unity обновиться
             unityCanvas.style.width = (newWidth - 1) + 'px';
             unityCanvas.style.height = (newHeight - 1) + 'px';
             
-            // Возвращаем правильный размер в следующем кадре - это заставит Unity обновить размер
             requestAnimationFrame(() => {
               unityCanvas.style.width = '100vw';
               unityCanvas.style.height = '100vh';
               
-              // Если Unity Module доступен, пытаемся обновить размер через API
               if (unityInstance.Module) {
-                // Обновляем размер canvas напрямую в Unity Module
                 if (unityInstance.Module.canvas) {
-                  // Принудительно обновляем внутренний размер canvas
                   const devicePixelRatio = window.devicePixelRatio || 1;
                   unityInstance.Module.canvas.width = newWidth * devicePixelRatio;
                   unityInstance.Module.canvas.height = newHeight * devicePixelRatio;
                   
-                  // Уведомляем Unity об изменении размера через изменение размеров canvas
                   if (unityInstance.Module.Screen && typeof unityInstance.Module.Screen.SetResolution === 'function') {
                     unityInstance.Module.Screen.SetResolution(newWidth, newHeight, false, 0);
                   }
                 }
                 
-                // Вызываем обработчик изменения размера, если он есть
                 if (unityInstance.Module.onResize) {
                   unityInstance.Module.onResize(newWidth, newHeight);
                 }
@@ -457,19 +439,15 @@
         }
       }
       
-      // Обработка возврата из фона (когда приложение разворачивается)
       document.addEventListener('visibilitychange', function() {
         if (!document.hidden && unityInstance && unityCanvas) {
-          // Когда приложение становится видимым, обновляем размер
           setTimeout(() => {
             checkOrientation();
           }, 200);
         }
       });
       
-      // Дополнительная обработка для Telegram WebApp
       if (isTelegramWebApp && telegramApp) {
-        // Обработка события изменения размера viewport в Telegram
         telegramApp.onEvent('viewportChanged', function() {
           if (unityInstance && unityCanvas) {
             setTimeout(() => {
@@ -481,7 +459,6 @@
 
       checkOrientation();
       
-      // Обработка изменения размера окна
       let resizeTimeout;
       window.addEventListener('resize', function() {
         clearTimeout(resizeTimeout);
@@ -490,9 +467,7 @@
         }, 100);
       });
       
-      // Обработка изменения ориентации устройства
       window.addEventListener('orientationchange', function() {
-        // Задержка для завершения анимации поворота
         setTimeout(() => {
           checkOrientation();
         }, 200);
@@ -504,7 +479,6 @@
       let fakeProgressTimer = null;
       let realProgressStarted = false;
 
-      // Функция для обновления отображения прогресса
       function updateProgressDisplay(percentage) {
         if (progressFill) {
           progressFill.style.width = `${percentage}%`;
@@ -515,14 +489,11 @@
         currentProgress = percentage;
       }
 
-      // Фейковый прогресс в начале (каждые 2 секунды +1%)
       function startFakeProgress() {
         fakeProgressTimer = setInterval(() => {
-          // Если реальная загрузка еще не началась, увеличиваем фейковый прогресс
           if (!realProgressStarted && currentProgress < 90) {
             updateProgressDisplay(currentProgress + 1);
           } else {
-            // Отменяем фейковый таймер, когда реальная загрузка началась
             if (fakeProgressTimer) {
               clearInterval(fakeProgressTimer);
               fakeProgressTimer = null;
@@ -534,7 +505,6 @@
       function updateProgress(progress) {
         const realPercentage = Math.round(progress * 100);
         
-        // Если реальный прогресс начался (больше 0.1%), отменяем фейковый таймер
         if (progress > 0.001 && !realProgressStarted) {
           realProgressStarted = true;
           if (fakeProgressTimer) {
@@ -543,24 +513,16 @@
           }
         }
         
-        // Трюк: показываем реальный прогресс до 90%, затем "замораживаем" на 90%
-        // даже когда реальный прогресс продолжает расти до 100%
         let displayPercentage = realPercentage;
         
         if (progress >= 0.9) {
-          // Когда реальный прогресс >= 90%, показываем только 90%
           displayPercentage = 90;
           currentProgress = 90;
         } else {
-          // До 90% показываем прогресс
           if (realProgressStarted) {
-            // Реальная загрузка началась - используем реальный прогресс
-            // Но не показываем меньше, чем уже показали (чтобы не было отката назад)
             displayPercentage = Math.max(realPercentage, currentProgress);
             currentProgress = displayPercentage;
           } else {
-            // Реальная загрузка еще не началась, фейковый таймер продолжит увеличивать прогресс
-            // Но если реальный прогресс больше фейкового, используем реальный
             if (realPercentage > currentProgress) {
               currentProgress = realPercentage;
               displayPercentage = realPercentage;
@@ -570,21 +532,16 @@
         
         updateProgressDisplay(displayPercentage);
 
-        // Когда реальный прогресс достиг 100%, запускаем таймер для увеличения от 90% до 100%
         if (progress >= 0.999 && !unityLoaded && !progressTimer) {
           unityLoaded = true;
-          // После полной загрузки Unity начинаем постепенное увеличение прогресса
-          // Каждые 2 секунды добавляем +1% до 100%
           progressTimer = setInterval(continueProgress, 2000);
         }
       }
 
-      // Функция для постепенного увеличения прогресса после 90%
       function continueProgress() {
         if (currentProgress < 100) {
           updateProgressDisplay(currentProgress + 1);
         } else {
-          // Останавливаем таймер при достижении 100%
           if (progressTimer) {
             clearInterval(progressTimer);
             progressTimer = null;
@@ -592,7 +549,6 @@
         }
       }
 
-      // Функция для удаления частиц
       function removeParticles() {
         const particles = document.querySelectorAll('.bubble-particle, .gold-particle');
         particles.forEach(particle => {
@@ -600,9 +556,7 @@
         });
       }
 
-      // Глобальная функция для скрытия экрана загрузки из Unity
       window.hideLoadingScreen = function() {
-        // Останавливаем таймер прогресса сразу
         if (progressTimer) {
           clearInterval(progressTimer);
           progressTimer = null;
@@ -612,26 +566,19 @@
           fakeProgressTimer = null;
         }
         
-        // Плавно скрываем экран через opacity за 0.3 секунды
         document.body.classList.add("loaded");
         
-        // После завершения анимации (0.3 секунды) деактивируем экран и удаляем частицы
         setTimeout(() => {
-          // Удаляем частицы
           removeParticles();
-          // Деактивируем экран (скрываем полностью)
           const loadingOverlay = document.getElementById("loading-overlay");
           if (loadingOverlay) {
             loadingOverlay.style.display = "none";
           }
-          // Игра загружена - теперь можно показывать экран поворота
           gameLoaded = true;
-          // Проверяем ориентацию для показа экрана поворота
           checkOrientation();
         }, 300);
       };
 
-      // Вызываем Telegram методы только если мы действительно в Telegram Web App
       if (isTelegramWebApp) {
         if (typeof telegramApp.expand === 'function') {
           telegramApp.expand();
@@ -641,13 +588,10 @@
         }
       }
 
-      // Инициализируем лоадер с 0%
       updateProgress(0);
       
-      // Запускаем фейковый прогресс в начале (каждые 2 секунды +1%)
       startFakeProgress();
 
-      // Создание частиц-пузырьков
       const loadingOverlay = document.getElementById("loading-overlay");
       
       function createBubbleParticles() {
@@ -661,44 +605,35 @@
           const particle = document.createElement('div');
           particle.className = 'bubble-particle';
           
-          // Случайный размер от 4px до 48px (в 2 раза меньше и в 2 раза больше)
           const size = Math.random() * 44 + 4;
           particle.style.width = size + 'px';
           particle.style.height = size + 'px';
           
-          // Случайно выбираем, откуда начинается частица: слева или снизу
           const startFromLeft = Math.random() > 0.5;
           
           if (startFromLeft) {
-            // Начальная позиция с левого края до половины высоты
-            const startLeft = Math.random() * 5; // от 0% до 5% слева
+            const startLeft = Math.random() * 5;
             particle.style.left = startLeft + '%';
-            const startTop = Math.random() * 50; // от 0% до 50% сверху (только до половины)
+            const startTop = Math.random() * 50;
             particle.style.top = startTop + '%';
             particle.style.bottom = 'auto';
           } else {
-            // Начальная позиция с нижнего края по всей ширине
-            const startLeft = Math.random() * 100; // от 0% до 100% слева (по всей ширине)
+            const startLeft = Math.random() * 100;
             particle.style.left = startLeft + '%';
-            const startBottom = Math.random() * 5; // от 0% до 5% снизу
+            const startBottom = Math.random() * 5;
             particle.style.bottom = startBottom + '%';
             particle.style.top = 'auto';
           }
           
-          // Движение вправо (диагонально вверх вправо, как вьюга)
-          const rightMovement = Math.random() * 100 + 50; // от 50vh до 150vh вправо
+          const rightMovement = Math.random() * 100 + 50;
           
-          // Случайная длительность анимации от 8 до 15 секунд
           const duration = Math.random() * 7 + 8;
           
-          // Случайная задержка старта от 0 до 5 секунд
           const delay = Math.random() * 5;
           
-          // Случайная прозрачность от 0.2 до 0.5
           const opacity = Math.random() * 0.3 + 0.2;
           particle.style.background = `rgba(255, 247, 68, ${opacity})`;
           
-          // Создаем уникальные keyframes для каждой частицы
           const animationName = `bubbleFloat${i}`;
           const keyframes = `
             @keyframes ${animationName} {
@@ -720,55 +655,42 @@
           `;
           styleSheet.textContent += keyframes;
           
-          // Применяем анимацию к частице
           particle.style.animation = `${animationName} ${duration}s linear ${delay}s infinite`;
           
           loadingOverlay.appendChild(particle);
         }
 
-        // Создаем маленькие золотые кружочки (10 штук)
         const goldParticleCount = 10;
         for (let i = 0; i < goldParticleCount; i++) {
           const goldParticle = document.createElement('div');
           goldParticle.className = 'gold-particle';
           
-          // Размер фиксированный 16x16 пикселей
           goldParticle.style.width = '16px';
           goldParticle.style.height = '16px';
           goldParticle.style.background = 'rgb(255, 182, 35)';
           
-          // Случайно выбираем, откуда начинается частица: слева или снизу
           const startFromLeft = Math.random() > 0.5;
           
           if (startFromLeft) {
-            // Начальная позиция с левого края до половины высоты
-            const startLeft = Math.random() * 5; // от 0% до 5% слева
+            const startLeft = Math.random() * 5;
             goldParticle.style.left = startLeft + '%';
-            const startTop = Math.random() * 50; // от 0% до 50% сверху (только до половины)
+            const startTop = Math.random() * 50;
             goldParticle.style.top = startTop + '%';
             goldParticle.style.bottom = 'auto';
           } else {
-            // Начальная позиция с нижнего края по всей ширине
-            const startLeft = Math.random() * 100; // от 0% до 100% слева (по всей ширине)
+            const startLeft = Math.random() * 100;
             goldParticle.style.left = startLeft + '%';
-            const startBottom = Math.random() * 5; // от 0% до 5% снизу
+            const startBottom = Math.random() * 5;
             goldParticle.style.bottom = startBottom + '%';
             goldParticle.style.top = 'auto';
           }
           
-          // Движение вправо (диагонально вверх вправо, как вьюга)
-          const rightMovement = Math.random() * 100 + 50; // от 50vh до 150vh вправо
+          const rightMovement = Math.random() * 100 + 50;
           
-          // Случайная длительность анимации от 8 до 15 секунд
           const duration = Math.random() * 7 + 8;
           
-          // Случайная задержка старта от 0 до 5 секунд
           const delay = Math.random() * 5;
           
-          // Золотые кружочки непрозрачные
-          // background уже установлен в CSS как rgb(255, 182, 35)
-          
-          // Создаем уникальные keyframes для каждой золотой частицы
           const animationName = `goldFloat${i}`;
           const keyframes = `
             @keyframes ${animationName} {
@@ -790,21 +712,18 @@
           `;
           styleSheet.textContent += keyframes;
           
-          // Применяем анимацию к золотой частице
           goldParticle.style.animation = `${animationName} ${duration}s linear ${delay}s infinite`;
           
           loadingOverlay.appendChild(goldParticle);
         }
       }
 
-      // Создаем частицы после загрузки страницы
       if (document.readyState === 'complete') {
         createBubbleParticles();
       } else {
         window.addEventListener('load', createBubbleParticles);
       }
 
-      // Функция запуска Unity
       function startUnity() {
         createUnityInstance(unityCanvas, {
           arguments: [],
@@ -817,16 +736,12 @@
           productVersion: BUILD_VERSION,
           matchWebGLToCanvasSize: true,
         }, updateProgress).then((instance) => {
-          // Сохраняем ссылку на экземпляр Unity для последующего использования
           unityInstance = instance;
-          // Unity успешно загружен, таймер прогресса запустится автоматически
-          // когда updateProgress получит прогресс >= 0.999
         }).catch((message) => {
           console.log(message);
         });
       }
 
-      // Запускаем Unity сразу
       startUnity();
     </script>
   </body>
